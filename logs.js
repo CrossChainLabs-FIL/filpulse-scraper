@@ -12,8 +12,13 @@ function WARNING(msg) {
     console.log(timestamp.utc('YYYY/MM/DD-HH:mm:ss:ms'), '\x1b[33m', '[ WARNING ] ', '\x1b[0m', msg);
 }
 
+function STATUS(msg) {
+    console.log(timestamp.utc('YYYY/MM/DD-HH:mm:ss:ms'), '\033[34m', '[ STATUS ] ', '\x1b[0m', msg);
+}
+
 module.exports = {
     INFO,
     ERROR,
-    WARNING
+    WARNING,
+    STATUS
 };
