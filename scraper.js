@@ -82,6 +82,59 @@ class Scraper {
 
         return result
     }
+
+    async GetRepoContributors(repo, org) {
+        let repo_full_name = org + '/' + repo;
+        let requests = this.remaining_requests;
+
+        INFO(`GetRepoContributors [${org}/${repo}]`);
+
+        try {
+            let have_items = false;
+            let page = 1;
+
+            do {
+                let result = [];
+
+                const respContributors = await this.GetWithRateLimitCheck(
+                    this.api + 'repos/' + repo_full_name + '/contributors',
+                    {
+                        per_page: PER_PAGE,
+                        page: page,
+                    });
+
+                if (respContributors?.data.length === PER_PAGE) {
+                    have_items = true;
+                    page++;
+                } else {
+                    have_items = false;
+                }
+
+                respContributors?.data.forEach(contributor => {
+                    if (contributor?.type === 'User') {
+                        result.push({
+                            id: contributor?.id,
+                            dev_name: contributor?.login,
+                            repo: repo,
+                            organisation: org,
+                            avatar_url: contributor?.avatar_url,
+                            contributions: contributor?.contributions,
+                        })
+                    }
+                });
+
+                await db.SaveDevs(result);
+                await db.SaveContributions(result);
+            } while (have_items);
+
+        } catch (e) {
+            ERROR(`GetRepoContributors: ${e}`);
+        }
+
+        requests = requests - this.remaining_requests;
+
+        INFO(`GetRepoContributors [${org}/${repo}] done (used requests: ${requests})`);
+    }
 }
 
 module.exports = {
