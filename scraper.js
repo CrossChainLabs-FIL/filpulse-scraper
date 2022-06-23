@@ -217,7 +217,6 @@ class Scraper {
             for (let i = 0; i < whitelisted_organizations.length; i++) {
                 let org = whitelisted_organizations[i];
                 let org_repos = await this.GetOrganizationRepos(org);
-
                 org_repos.forEach(repo => {
                     if (!this.IsBlacklisted(repo, org)) {
                         repos.push({
@@ -230,7 +229,7 @@ class Scraper {
                 })
             }
 
-            if (whitelisted_repos?.length) {
+            if (whitelisted_repos?.length > 0) {
                 for (let i = 0; i < whitelisted_repos.length; i++) {
                     let repo_full_name = whitelisted_repos[i];
                     let split = repo_full_name.split('/');
@@ -255,6 +254,7 @@ class Scraper {
             await db.SaveRepos(repos);
 
         } catch (e) {
+            console.log(e);
             ERROR(`GetWhitelistedRepos: ${e}`);
         }
 
@@ -614,7 +614,11 @@ class Scraper {
             since = new Date(latest_issue_date?.rows[0]?.max).toISOString();
         }
 
-        INFO(`GetRepoIssues [${org}/${repo}] updated since ${since}`);
+        if (since) {
+            INFO(`GetRepoIssues [${org}/${repo}] updated since ${since}`);
+        } else {
+            INFO(`GetRepoIssues [${org}/${repo}]`);
+        }
 
         try {
             let result = [];
@@ -788,11 +792,11 @@ class Scraper {
                 INFO(`Skip Scraping [${org}/${repo}] no updates`);
             } else {
                 INFO(`Refresh views`);
-                await db.RefreshView('view1');
+                /*await db.RefreshView('view1');
                 await db.RefreshView('view2');
                 await db.RefreshView('view3');
                 await db.RefreshView('view4');
-                await db.RefreshView('view5');
+                await db.RefreshView('view5');*/
                 INFO(`Refresh views done`);
             }
         }
@@ -809,15 +813,3 @@ class Scraper {
 module.exports = {
     Scraper
 };
-
-(async () => {
-    const config = require('./config');
-    const scraper = new Scraper(config.scraper.github_api, config.scraper.github_token);
-
-    for( let i = 0; i < 100; i++) {
-        const result = await scraper.GetRepoInfo('filecoin-project', 'lotus');
-        console.log(result);
-    }
-}
-
-)(); 

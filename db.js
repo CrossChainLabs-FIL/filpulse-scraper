@@ -81,15 +81,13 @@ class DB {
                         '${repo.owner_type}',\
                         ${FormatNull(repo.created_at)},\
                         ${FormatNull(repo.updated_at)},\
-                        ${FormatNull(repo.pushed_at)},\
-                        '${repo.forks}',\
-                        '${repo.main_language}'`;
+                        ${FormatNull(repo.pushed_at)}`;
 
             await this.Query(`
                 UPDATE repos SET stars='${repo.stars}', default_branch='${repo.default_branch}', languages='${repo.languages}', \
-                        dependencies='${repo.dependencies}', updated_at='${repo.updated_at}', pushed_at='${repo.pushed_at}', forks=${repo.forks}, main_language='${repo.main_language}'\
+                        dependencies='${repo.dependencies}', updated_at='${repo.updated_at}', pushed_at='${repo.pushed_at}'\
                     WHERE repo='${repo.repo}' AND organisation='${repo.organisation}'; \
-                INSERT INTO repos (repo, organisation, repo_type, stars, default_branch, languages, dependencies, owner_type, created_at, updated_at, pushed_at, forks, main_language) \
+                INSERT INTO repos (repo, organisation, repo_type, stars, default_branch, languages, dependencies, owner_type, created_at, updated_at, pushed_at) \
                     SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM repos WHERE repo='${repo.repo}' AND organisation='${repo.organisation}');`,
                     'SaveRepoInfo');
 
