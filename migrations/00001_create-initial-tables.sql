@@ -51,6 +51,7 @@ CREATE TABLE IF NOT EXISTS commits
     organisation text NOT NULL,
     branch text NOT NULL,
     commit_date Timestamptz,
+    message text;
     UNIQUE (commit_hash)
 );
 

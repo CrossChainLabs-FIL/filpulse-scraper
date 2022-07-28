@@ -179,10 +179,11 @@ class DB {
                             '${commit.repo}',\
                             '${commit.organisation}',\
                             '${commit.branch}',\
-                            ${FormatNull(commit.commit_date)}`;
+                            ${FormatNull(commit.commit_date)},
+                            '${FormatText(commit.message)}'`;
 
                 query += `\
-                    INSERT INTO commits (commit_hash, dev_id, dev_name, repo, organisation, branch, commit_date) \
+                    INSERT INTO commits (commit_hash, dev_id, dev_name, repo, organisation, branch, commit_date, message) \
                         SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM commits WHERE commit_hash='${commit.commit_hash}');`;
                         
 

@@ -512,6 +512,7 @@ class Scraper {
                                         organisation: org,
                                         branch: branch,
                                         commit_date: commit?.commit?.committer?.date,
+                                        message: commit?.commit?.message
                                     })
                                 }
                             });
@@ -792,11 +793,11 @@ class Scraper {
                 INFO(`Skip Scraping [${org}/${repo}] no updates`);
             } else {
                 INFO(`Refresh views`);
-                /*await db.RefreshView('view1');
-                await db.RefreshView('view2');
-                await db.RefreshView('view3');
-                await db.RefreshView('view4');
-                await db.RefreshView('view5');*/
+                await db.RefreshView('overview_view');
+                await db.RefreshView('top_contributors_view');
+                await db.RefreshView('commits_view');
+                await db.RefreshView('active_contributors_view');
+                await db.RefreshView('recent_commits_view');
                 INFO(`Refresh views done`);
             }
         }
