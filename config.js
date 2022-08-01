@@ -6,7 +6,7 @@ module.exports = {
       whitelisted_repos: process.env.WHITELISTED_REPOS.split(", ") || [],
       blacklisted_organizations: process.env.BLACKLIST_ORGANIZATIONS.split(", ") || [],
       blacklisted_repos: process.env.BLACKLIST_REPOS.split(", ") || [],
-      recent_commits_days: process.env.RECENT_COMMITS_DAYS || 365,
+      recent_commits_days: process.env.RECENT_COMMITS_DAYS || 400,
     },
     database: {
         user: process.env.DB_USER || '',
