@@ -31,16 +31,6 @@ class Scraper {
         }
     }
 
-    GetRecentCommitsDate(date) {
-        let result = date;
-        let recent_commits_date = subDays(new Date(), config.scraper.recent_commits_days);
-        if (compareAsc(recent_commits_date, date) == 1) {
-            result = recent_commits_date;
-        }
-
-        return result;
-    }
-
     GetNextToken() {
         if (this.token_list_index < this.token_list.length - 1) {
             this.token_list_index++;
@@ -424,8 +414,6 @@ class Scraper {
         let commitsSet = new Set();
         let repo_full_name = org + '/' + repo;
         let requests = this.remaining_requests;
-        
-        let recent_commits_date = subDays(new Date(), config.scraper.recent_commits_days);
 
         const default_branch_result = await db.Query(`SELECT default_branch FROM repos WHERE repo='${repo}' AND organisation='${org}';`);
         const default_branch = default_branch_result?.rows[0]?.default_branch;
@@ -450,9 +438,7 @@ class Scraper {
     
                         const latest_commit_date_result = await db.Query(`SELECT latest_commit_date FROM branches WHERE repo='${repo}' AND organisation='${org}' AND branch='${branch}';`);
                         if (latest_commit_date_result?.rows[0]?.latest_commit_date) {
-                            since = this.GetRecentCommitsDate(new Date(latest_commit_date_result?.rows[0]?.latest_commit_date)).toISOString();
-                        } else {
-                            since = recent_commits_date.toISOString();
+                            since = new Date(latest_commit_date_result?.rows[0]?.latest_commit_date).toISOString();
                         }
     
                         let latest_commit_timestamp = undefined;
