@@ -5,6 +5,8 @@ const { compareAsc, subDays } = require('date-fns');
 const { INFO, ERROR, WARNING, STATUS } = require('./logs');
 const { DB } = require('./db');
 
+//require('events').EventEmitter.defaultMaxListeners = 15;
+
 let db = new DB();
 
 const PER_PAGE = 100;
@@ -783,7 +785,9 @@ class Scraper {
                 await db.RefreshView('top_contributors_view');
                 await db.RefreshView('commits_view');
                 await db.RefreshView('active_contributors_view');
-                await db.RefreshView('recent_commits_view');
+                await db.RefreshView('tab_commits_view');
+                await db.RefreshView('devs_view');
+                await db.RefreshView('projects_view');
                 INFO(`Refresh views done`);
             }
         }
