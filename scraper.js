@@ -788,6 +788,7 @@ class Scraper {
                 await db.RefreshView('tab_commits_view');
                 await db.RefreshView('devs_view');
                 await db.RefreshView('projects_view');
+                await db.RefreshView('tab_contributors_view');
                 INFO(`Refresh views done`);
             }
         }
