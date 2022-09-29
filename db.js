@@ -6,8 +6,8 @@ const { WARNING } = require('./logs');
 // Type parser to use for timestamp without time zone
 // This will keep node-pg from parsing the value into a Date object and give you the raw timestamp string instead.
 var types = require('pg').types;
-types.setTypeParser(1114, function(stringValue) {
-  return stringValue;
+types.setTypeParser(1114, function (stringValue) {
+    return stringValue;
 })
 
 function FormatNull(t) {
@@ -61,7 +61,7 @@ class DB {
                 await this.Query(`
                     INSERT INTO repos_list (repo, organisation, repo_type, dependencies) \
                         SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM repos_list WHERE repo='${repo.repo}' AND organisation='${repo.organisation}');`,
-                        'SaveRepos');
+                    'SaveRepos');
 
             } catch (err) {
                 WARNING(`[SaveRepos] -> ${err}`)
@@ -89,7 +89,7 @@ class DB {
                     WHERE repo='${repo.repo}' AND organisation='${repo.organisation}'; \
                 INSERT INTO repos (repo, organisation, repo_type, stars, default_branch, languages, dependencies, owner_type, created_at, updated_at, pushed_at) \
                     SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM repos WHERE repo='${repo.repo}' AND organisation='${repo.organisation}');`,
-                    'SaveRepoInfo');
+                'SaveRepoInfo');
 
         } catch (err) {
             WARNING(`[SaveRepoInfo] -> ${err}`)
@@ -108,7 +108,7 @@ class DB {
                     WHERE repo='${branch.repo}' AND organisation='${branch.organisation}' AND branch='${branch.branch}'; \
                 INSERT INTO branches (repo, organisation, branch, latest_commit_date) \
                     SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM branches WHERE repo='${branch.repo}' AND organisation='${branch.organisation}' AND branch='${branch.branch}');`,
-                    'SaveBranch');
+                'SaveBranch');
 
         } catch (err) {
             WARNING(`[SaveBranch] -> ${err}`)
@@ -117,7 +117,7 @@ class DB {
 
     async SaveDevs(devs) {
         let query = '';
-        
+
         for (let i = 0; i < devs.length; i++) {
             try {
                 let dev = devs[i];
@@ -130,14 +130,14 @@ class DB {
                     WHERE dev_name='${dev.dev_name}'; \
                 INSERT INTO devs (id, dev_name, avatar_url) \
                     SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM devs WHERE dev_name='${dev.dev_name}');`;
-                    
+
 
             } catch (err) {
                 WARNING(`[SaveDevs] -> ${err}`)
             }
         }
 
-        await this.Query(query,'SaveDevs');
+        await this.Query(query, 'SaveDevs');
     }
 
     async SaveContributions(devs) {
@@ -157,7 +157,7 @@ class DB {
                     WHERE dev_name='${dev.dev_name}' AND repo='${dev.repo}' AND organisation='${dev.organisation}'; \
                 INSERT INTO devs_contributions (dev_name, repo, organisation, contributions) \
                     SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM devs_contributions WHERE dev_name='${dev.dev_name}' AND repo='${dev.repo}' AND organisation='${dev.organisation}');`;
-                    
+
 
             } catch (err) {
                 WARNING(`[SaveContributions] -> ${err}`)
@@ -185,7 +185,7 @@ class DB {
                 query += `\
                     INSERT INTO commits (commit_hash, dev_id, dev_name, repo, organisation, branch, commit_date, message) \
                         SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM commits WHERE commit_hash='${commit.commit_hash}');`;
-                        
+
 
             } catch (err) {
                 WARNING(`[SaveCommits] -> ${err}`)
@@ -212,18 +212,20 @@ class DB {
                         ${FormatNull(pr.merged_at)},\
                         '${pr.repo}',\
                         '${pr.organisation}',\
-                        '${pr.dev_name}'`;
+                        '${pr.dev_name}',\
+                        '${pr.avatar_url}'`;
 
                 query += `\
                     UPDATE prs SET title='${FormatText(pr.title)}',\
                                 pr_state='${pr.pr_state}', \
                                 updated_at=${FormatNull(pr.updated_at)}, \
                                 closed_at=${FormatNull(pr.closed_at)}, \
-                                merged_at=${FormatNull(pr.merged_at)} \
+                                merged_at=${FormatNull(pr.merged_at)}, \
+                                avatar_url=${FormatNull(pr.avatar_url)} \
                         WHERE id='${pr.id}' AND repo='${pr.repo}' AND organisation='${pr.organisation}'; \
-                    INSERT INTO prs (id, pr_number, title, html_url, pr_state, created_at, updated_at, closed_at, merged_at, repo, organisation, dev_name) \
+                    INSERT INTO prs (id, pr_number, title, html_url, pr_state, created_at, updated_at, closed_at, merged_at, repo, organisation, dev_name, avatar_url) \
                             SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM prs WHERE id='${pr.id}' AND repo='${pr.repo}' AND organisation='${pr.organisation}');`;
-                    
+
 
             } catch (err) {
                 WARNING(`[SavePRs] -> ${err}`)
@@ -235,7 +237,7 @@ class DB {
 
     async SaveIssues(issues) {
         let query = '';
-        
+
         for (let i = 0; i < issues.length; i++) {
             try {
                 let issue = issues[i];
@@ -259,14 +261,72 @@ class DB {
                         WHERE id='${issue.id}' AND repo='${issue.repo}' AND organisation='${issue.organisation}'; \
                     INSERT INTO issues (id, issue_number, title, html_url, issue_state, created_at, updated_at, closed_at, repo, organisation, dev_name) \
                             SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues WHERE id='${issue.id}' AND repo='${issue.repo}' AND organisation='${issue.organisation}');`;
-                    
+
 
             } catch (err) {
                 WARNING(`[SaveIssues] -> ${err}`)
             }
         }
 
-         await this.Query(query, 'SaveIssues');
+        await this.Query(query, 'SaveIssues');
+    }
+
+    async SaveIssuesComments(issues_comments) {
+        let query = '';
+
+        for (let i = 0; i < issues_comments.length; i++) {
+            try {
+                let issues_comment = issues_comments[i];
+                let values = `'${issues_comment.id}', \
+                        '${issues_comment.issue_number}',\
+                        '${issues_comment.html_url}',\
+                        '${FormatText(issues_comment.body)}',\
+                        ${FormatNull(issues_comment.created_at)},\
+                        ${FormatNull(issues_comment.updated_at)},\
+                        '${issues_comment.repo}',\
+                        '${issues_comment.organisation}',\
+                        '${issues_comment.dev_name}'`;
+
+                query += `\
+                    UPDATE issues_comments SET body='${FormatText(issues_comment.body)}',\
+                                updated_at=${FormatNull(issues_comment.updated_at)} \
+                        WHERE id='${issues_comment.id}' AND repo='${issues_comment.repo}' AND organisation='${issues_comment.organisation}'; \
+                    INSERT INTO issues_comments (id, issue_number, html_url, body, created_at, updated_at, repo, organisation, dev_name) \
+                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues_comments WHERE id='${issues_comment.id}' AND repo='${issues_comment.repo}' AND organisation='${issues_comment.organisation}');`;
+
+
+            } catch (err) {
+                WARNING(`[SaveIssuesComments] -> ${err}`)
+            }
+        }
+
+        await this.Query(query, 'SaveIssuesComments');
+    }
+
+    async SaveIssuesAssignees(issues_assignees) {
+        let query = '';
+
+        for (let i = 0; i < issues_assignees.length; i++) {
+            try {
+                let assignee = issues_assignees[i];
+                let values = `
+                        '${assignee.issue_number}',\
+                        '${assignee.dev_name}',\
+                        '${assignee.avatar_url}'`;
+
+                query += `\
+                    UPDATE issues_assignees SET avatar_url='${assignee.avatar_url}'\
+                        WHERE issue_number='${assignee.issue_number}' AND dev_name='${assignee.dev_name}'; \
+                    INSERT INTO issues_assignees (issue_number, dev_name, avatar_url) \
+                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues_assignees WHERE issue_number='${assignee.issue_number}' AND dev_name='${assignee.dev_name}');`;
+
+
+            } catch (err) {
+                WARNING(`[SaveIssuesAssignees] -> ${err}`)
+            }
+        }
+
+        await this.Query(query, 'SaveIssuesAssignees');
     }
 }
 

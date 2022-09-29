@@ -78,6 +78,7 @@ CREATE TABLE IF NOT EXISTS prs
     repo text NOT NULL,
     organisation text NOT NULL,
     dev_name text NOT NULL,
+    avatar_url text,
     UNIQUE (id)
 );
 
@@ -96,3 +97,26 @@ CREATE TABLE IF NOT EXISTS issues
     dev_name text NOT NULL,
     UNIQUE (id)
 );
+
+CREATE TABLE IF NOT EXISTS issues_comments
+(
+    id int NOT NULL,
+    issue_number int NOT NULL,
+    html_url text NOT NULL,
+    body text NOT NULL,
+    created_at Timestamptz,
+    updated_at Timestamptz,
+    repo text NOT NULL,
+    organisation text NOT NULL,
+    dev_name text NOT NULL,
+    UNIQUE (id)
+);
+
+CREATE TABLE IF NOT EXISTS issues_assignees
+(
+    issue_number int NOT NULL,
+    dev_name text NOT NULL,
+    avatar_url text,
+    UNIQUE (dev_name, issue_number)
+);
+

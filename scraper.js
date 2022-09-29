@@ -178,10 +178,6 @@ class Scraper {
             }
         }
 
-        if (result) {
-            WARNING(`IsBlacklisted: ${org}/${repo}`);
-        }
-
         return result;
     }
 
@@ -543,11 +539,12 @@ class Scraper {
         INFO(`GetRepoPRs [${org}/${repo}]`);
 
         try {
-            let result = [];
             let have_items = false;
             let page = 1;
 
             do {
+                let result = [];
+
                 let params = {
                     per_page: PER_PAGE,
                     page: page,
@@ -564,6 +561,8 @@ class Scraper {
                     have_items = false;
                 }
 
+                let contributors = [];
+
                 respPRs?.data.forEach(pr => {
                     result.push({
                         id: pr?.id,
@@ -574,13 +573,25 @@ class Scraper {
                         created_at: pr?.created_at,
                         updated_at: pr?.updated_at,
                         closed_at: pr?.closed_at,
-                        merged_at:  pr?.merged_at,
+                        merged_at: pr?.merged_at,
                         repo: repo,
                         organisation: org,
                         dev_name: pr?.user?.login,
+                        avatar_url: pr?.user?.avatar_url,
                     });
+
+
+                    if (pr?.user?.type === 'User') {
+                        contributors.push({
+                            id: pr?.user?.id,
+                            dev_name: pr?.user?.login,
+                            avatar_url: pr?.user?.avatar_url,
+                        })
+                    }
+
                 });
 
+                await db.SaveDevs(contributors);
                 await db.SavePRs(result);
             } while (have_items);
 
@@ -610,11 +621,11 @@ class Scraper {
         }
 
         try {
-            let result = [];
             let have_items = false;
             let page = 1;
 
             do {
+                let result = [];
                 let params = {
                     per_page: PER_PAGE,
                     page: page,
@@ -635,6 +646,8 @@ class Scraper {
                     have_items = false;
                 }
 
+                let assignees = [];
+
                 respIssues?.data.forEach(issue => {
                     result.push({
                         id: issue?.id,
@@ -649,9 +662,19 @@ class Scraper {
                         organisation: org,
                         dev_name: issue?.user?.login,
                     });
+
+                    issue?.assignees.forEach(assignee => { 
+                        assignees.push({
+                            issue_number: issue?.number,
+                            dev_name: assignee?.login,
+                            avatar_url: assignee?.avatar_url,
+                        })
+
+                    });
                 });
 
                 await db.SaveIssues(result);
+                await db.SaveIssuesAssignees(assignees);
             } while (have_items);
 
         } catch (e) {
@@ -749,6 +772,75 @@ class Scraper {
         return updated_repo_item;
     }
 
+    async GetRepoIssueComments(repo, org) {
+        let repo_full_name = org + '/' + repo;
+        let requests = this.remaining_requests;
+        let since = undefined;
+
+        const latest_issue_date = await db.Query(`SELECT MAX(updated_at) FROM issues_comments WHERE repo='${repo}' AND organisation='${org}';`);
+        if (latest_issue_date?.rows[0]?.max) {
+            since = new Date(latest_issue_date?.rows[0]?.max).toISOString();
+        }
+
+        if (since) {
+            INFO(`GetRepoIssueComments [${org}/${repo}] updated since ${since}`);
+        } else {
+            INFO(`GetRepoIssueComments [${org}/${repo}]`);
+        }
+
+        try {
+
+            let have_items = false;
+            let page = 1;
+
+            do {
+                let result = [];
+                let params = {
+                    per_page: PER_PAGE,
+                    page: page,
+                    state: 'all',
+                };
+
+                if (since) {
+                    params.since = since;
+                }
+
+                const respIssuesComments = await this.GetWithRateLimitCheck(
+                    this.api + 'repos/' + repo_full_name + '/issues/comments', params);
+
+                if (respIssuesComments?.data.length === PER_PAGE) {
+                    have_items = true;
+                    page++;
+                } else {
+                    have_items = false;
+                }
+
+
+                respIssuesComments?.data.forEach(comment => {
+                    var n = comment?.issue_url.lastIndexOf('/');
+                    let issue_number = parseInt(comment?.issue_url.substring(n + 1));
+                    result.push({
+                        id: comment?.id,
+                        issue_number: issue_number,
+                        html_url: comment?.html_url,
+                        body: comment?.body,
+                        created_at: comment?.created_at,
+                        updated_at: comment?.updated_at,
+                        repo: repo,
+                        organisation: org,
+                        dev_name: comment?.user?.login,
+                    });
+
+                });
+
+                await db.SaveIssuesComments(result);
+            } while (have_items);
+
+        } catch (e) {
+            ERROR(`GetRepoIssueComments: ${e}`);
+        }
+    }
+
     async Run() {
         STATUS('Scraping');
 
@@ -774,6 +866,7 @@ class Scraper {
             if (status.updated) {
                 await this.GetRepoContributors(repo, org);
                 await this.GetRepoIssues(repo, org);
+                await this.GetRepoIssueComments(repo, org);
                 await this.GetRepoInfo(repo, org, dependencies, repo_type);
             }
 
