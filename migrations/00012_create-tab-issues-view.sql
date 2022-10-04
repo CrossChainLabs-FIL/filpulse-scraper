@@ -1,6 +1,7 @@
 CREATE MATERIALIZED VIEW IF NOT EXISTS tab_issues_view
 AS
-    SELECT
+with
+  issues_data as (SELECT
         issue_number,
         title,
         html_url,
@@ -10,8 +11,24 @@ AS
         repo,
         organisation,
         updated_at
-    FROM issues
-    ORDER BY updated_at DESC
+    FROM issues),
+     assignees as (SELECT issue_number, repo, organisation, '[[' || string_agg(concat_ws(',',dev_name, avatar_url), '],[') || ']]' AS assignees
+                   FROM   issues_assignees
+                   GROUP  BY issue_number, repo, organisation)
+    SELECT
+        issues_data.issue_number,
+        title,
+        html_url,
+        issue_state,
+        dev_name,
+        avatar_url,
+        issues_data.repo,
+        issues_data.organisation,
+        COALESCE(assignees.assignees, '[]') as assignees,
+        updated_at
+FROM issues_data
+LEFT JOIN assignees ON assignees.issue_number = issues_data.issue_number AND assignees.repo = issues_data.repo AND assignees.organisation = issues_data.organisation
+ORDER BY updated_at DESC
 WITH DATA;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tab_issues_view ON tab_issues_view(issue_number, repo, organisation);
