@@ -21,6 +21,7 @@ with
              GROUP BY dev_name, repo, organisation),
          data as (SELECT
                                  contributions.dev_name,
+                                 devs.avatar_url,
                                  contributions.repo,
                                  contributions.organisation,
                                  contributions.contributions,
@@ -31,6 +32,7 @@ with
          FROM contributions
          LEFT JOIN user_issues ON contributions.dev_name = user_issues.dev_name AND contributions.repo = user_issues.repo AND contributions.organisation = user_issues.organisation
          LEFT JOIN user_prs ON contributions.dev_name = user_prs.dev_name AND contributions.repo = user_prs.repo AND contributions.organisation = user_prs.organisation
+         LEFT JOIN devs ON contributions.dev_name = devs.dev_name
         )
 
     SELECT *  FROM data ORDER BY contributions DESC
