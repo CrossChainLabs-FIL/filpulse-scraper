@@ -647,6 +647,7 @@ class Scraper {
                 }
 
                 let assignees = [];
+                let contributors = [];
 
                 respIssues?.data.forEach(issue => {
                     result.push({
@@ -661,6 +662,7 @@ class Scraper {
                         repo: repo,
                         organisation: org,
                         dev_name: issue?.user?.login,
+                        avatar_url: issue?.user?.avatar_url,
                     });
 
                     issue?.assignees.forEach(assignee => { 
@@ -668,13 +670,23 @@ class Scraper {
                             issue_number: issue?.number,
                             dev_name: assignee?.login,
                             avatar_url: assignee?.avatar_url,
+                            repo: repo,
+                            organisation: org,
                         })
-
                     });
+
+                    if (issue?.user?.type === 'User') {
+                        contributors.push({
+                            id: issue?.user?.id,
+                            dev_name: issue?.user?.login,
+                            avatar_url: issue?.user?.avatar_url,
+                        })
+                    }
                 });
 
                 await db.SaveIssues(result);
                 await db.SaveIssuesAssignees(assignees);
+                await db.SaveDevs(contributors);
             } while (have_items);
 
         } catch (e) {

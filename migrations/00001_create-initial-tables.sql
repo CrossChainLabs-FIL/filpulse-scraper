@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS issues
     repo text NOT NULL,
     organisation text NOT NULL,
     dev_name text NOT NULL,
+    avatar_url text,
     UNIQUE (id)
 );
 
@@ -117,6 +118,8 @@ CREATE TABLE IF NOT EXISTS issues_assignees
     issue_number int NOT NULL,
     dev_name text NOT NULL,
     avatar_url text,
-    UNIQUE (dev_name, issue_number)
+    repo text NOT NULL,
+    organisation text NOT NULL,
+    UNIQUE (dev_name, issue_number, repo, organisation)
 );
 

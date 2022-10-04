@@ -221,7 +221,7 @@ class DB {
                                 updated_at=${FormatNull(pr.updated_at)}, \
                                 closed_at=${FormatNull(pr.closed_at)}, \
                                 merged_at=${FormatNull(pr.merged_at)}, \
-                                avatar_url=${FormatNull(pr.avatar_url)} \
+                                avatar_url='${pr.avatar_url}' \
                         WHERE id='${pr.id}' AND repo='${pr.repo}' AND organisation='${pr.organisation}'; \
                     INSERT INTO prs (id, pr_number, title, html_url, pr_state, created_at, updated_at, closed_at, merged_at, repo, organisation, dev_name, avatar_url) \
                             SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM prs WHERE id='${pr.id}' AND repo='${pr.repo}' AND organisation='${pr.organisation}');`;
@@ -251,15 +251,17 @@ class DB {
                         ${FormatNull(issue.closed_at)},\
                         '${issue.repo}',\
                         '${issue.organisation}',\
-                        '${issue.dev_name}'`;
+                        '${issue.dev_name}',\
+                        '${issue.avatar_url}'`;
 
                 query += `\
                     UPDATE issues SET title='${FormatText(issue.title)}',\
                                 issue_state='${issue.issue_state}', \
                                 updated_at=${FormatNull(issue.updated_at)}, \
-                                closed_at=${FormatNull(issue.closed_at)} \
+                                closed_at=${FormatNull(issue.closed_at)}, \
+                                avatar_url='${issue.avatar_url}' \
                         WHERE id='${issue.id}' AND repo='${issue.repo}' AND organisation='${issue.organisation}'; \
-                    INSERT INTO issues (id, issue_number, title, html_url, issue_state, created_at, updated_at, closed_at, repo, organisation, dev_name) \
+                    INSERT INTO issues (id, issue_number, title, html_url, issue_state, created_at, updated_at, closed_at, repo, organisation, dev_name, avatar_url) \
                             SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues WHERE id='${issue.id}' AND repo='${issue.repo}' AND organisation='${issue.organisation}');`;
 
 
@@ -312,13 +314,15 @@ class DB {
                 let values = `
                         '${assignee.issue_number}',\
                         '${assignee.dev_name}',\
-                        '${assignee.avatar_url}'`;
+                        '${assignee.avatar_url}',\
+                        '${assignee.repo}',\
+                        '${assignee.organisation}'`;
 
                 query += `\
                     UPDATE issues_assignees SET avatar_url='${assignee.avatar_url}'\
-                        WHERE issue_number='${assignee.issue_number}' AND dev_name='${assignee.dev_name}'; \
-                    INSERT INTO issues_assignees (issue_number, dev_name, avatar_url) \
-                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues_assignees WHERE issue_number='${assignee.issue_number}' AND dev_name='${assignee.dev_name}');`;
+                        WHERE issue_number='${assignee.issue_number}' AND dev_name='${assignee.dev_name}' AND repo='${assignee.repo}' AND organisation='${assignee.organisation}'; \
+                    INSERT INTO issues_assignees (issue_number, dev_name, avatar_url, repo, organisation) \
+                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues_assignees WHERE issue_number='${assignee.issue_number}' AND dev_name='${assignee.dev_name}' AND repo='${assignee.repo}' AND organisation='${assignee.organisation}');`;
 
 
             } catch (err) {
