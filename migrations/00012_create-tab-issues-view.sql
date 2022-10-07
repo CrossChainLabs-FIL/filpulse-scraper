@@ -12,7 +12,7 @@ with
         organisation,
         updated_at
     FROM issues),
-     assignees as (SELECT issue_number, repo, organisation, '[[' || string_agg(concat_ws(',',dev_name, avatar_url), '],[') || ']]' AS assignees
+     assignees as (SELECT issue_number, repo, organisation, '[["' || string_agg(concat_ws('","',dev_name,avatar_url), '"],["') || '"]]' AS assignees
                    FROM   issues_assignees
                    GROUP  BY issue_number, repo, organisation)
     SELECT
