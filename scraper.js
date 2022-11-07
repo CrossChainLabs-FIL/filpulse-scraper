@@ -698,6 +698,62 @@ class Scraper {
         INFO(`GetRepoIssues [${org}/${repo}] done (used requests: ${requests})`);
     }
 
+    async GetRepoReleases(repo, org) {
+        let repo_full_name = org + '/' + repo;
+        let requests = this.remaining_requests;
+
+        INFO(`GetRepoReleases [${org}/${repo}]`);
+
+        try {
+            let have_items = false;
+            let page = 1;
+
+            do {
+                let result = [];
+
+                const respReleases = await this.GetWithRateLimitCheck(
+                    this.api + 'repos/' + repo_full_name + '/releases',
+                    {
+                        per_page: PER_PAGE,
+                        page: page,
+                    });
+
+                if (respReleases?.data.length === PER_PAGE) {
+                    have_items = true;
+                    page++;
+                } else {
+                    have_items = false;
+                }
+
+                respReleases?.data.forEach(release => {
+                    result.push({
+                        id: release?.id,
+                        tag_name: release?.tag_name,
+                        name: release?.name,
+                        draft: release?.draft,
+                        prerelease: release?.prerelease,
+                        created_at: release?.created_at,
+                        published_at: release?.published_at,
+                        repo: repo,
+                        organisation: org,
+                        dev_name: release?.author?.login,
+                        avatar_url: release?.author?.avatar_url,
+                    });
+                });
+
+                await db.SaveReleases(result);
+            } while (have_items);
+
+        } catch (e) {
+            ERROR(`GetRepoReleases: ${e}`);
+        }
+
+        requests = requests - this.remaining_requests;
+
+        INFO(`GetRepoReleases [${org}/${repo}] done (used requests: ${requests})`);
+    }
+
+
     async GetReposList() {
         let result = [];
         try {
@@ -877,6 +933,7 @@ class Scraper {
 
             if (status.updated) {
                 await this.GetRepoContributors(repo, org);
+                await this.GetRepoReleases(repo, org);
                 await this.GetRepoIssues(repo, org);
                 await this.GetRepoIssueComments(repo, org);
                 await this.GetRepoInfo(repo, org, dependencies, repo_type);
@@ -896,6 +953,7 @@ class Scraper {
                 await db.RefreshView('tab_contributors_view');
                 await db.RefreshView('tab_prs_view');
                 await db.RefreshView('tab_issues_view');
+                await db.RefreshView('tab_releases_view');
                 INFO(`Refresh views done`);
             }
         }

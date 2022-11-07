@@ -332,6 +332,36 @@ class DB {
 
         await this.Query(query, 'SaveIssuesAssignees');
     }
+
+    async SaveReleases(releases) {
+        let query = '';
+
+        for (let i = 0; i < releases.length; i++) {
+            try {
+                let release = releases[i];
+                let values = `'${release.id}', \
+                        ${FormatNull(release.tag_name)},\
+                        ${FormatNull(release.name)},\
+                        ${release.draft},
+                        ${release.prerelease},
+                        ${FormatNull(release.created_at)},\
+                        ${FormatNull(release.published_at)},\
+                        '${release.repo}',\
+                        '${release.organisation}',\
+                        '${release.dev_name}',\
+                        '${release.avatar_url}'`;
+
+                query += `\
+                    INSERT INTO releases (id, tag_name, name, draft, prerelease, created_at, published_at, repo, organisation, dev_name, avatar_url) \
+                    SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM releases WHERE id=${release.id});`;
+
+            } catch (err) {
+                WARNING(`[SaveReleases] -> ${err}`)
+            }
+        }
+
+        await this.Query(query, 'SaveReleases');
+    }
 }
 
 module.exports = {
