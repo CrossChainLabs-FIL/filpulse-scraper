@@ -3,7 +3,7 @@ AS
 with
   issues_data as (SELECT
         issue_number,
-        title,
+        CASE WHEN length(title) > 50 THEN concat(substring(title, 1, 50), '...') ELSE title END as title,
         html_url,
         issue_state,
         dev_name,

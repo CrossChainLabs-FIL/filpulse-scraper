@@ -2,7 +2,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS tab_releases_view
 AS
     SELECT
         id,
-        name,
+        CASE WHEN length(name) > 50 THEN concat(substring(name, 1, 50), '...') ELSE name END as name,
         dev_name,
         avatar_url,
         CASE WHEN published_at is not null THEN published_at ELSE created_at END AS updated_at,

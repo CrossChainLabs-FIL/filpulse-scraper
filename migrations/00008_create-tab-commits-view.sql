@@ -2,7 +2,16 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS tab_commits_view
 AS
     with
          commits as ( SELECT dev_name, repo, organisation, commit_hash, commit_date, message FROM commits),
-         user_commits as (SELECT commits.dev_name, repo, organisation, commit_hash, commit_date, avatar_url, message FROM commits INNER JOIN devs ON commits.dev_name = devs.dev_name)
+         user_commits as (
+            SELECT 
+                commits.dev_name, 
+                repo, 
+                organisation, 
+                commit_hash, 
+                commit_date, 
+                avatar_url, 
+                CASE WHEN length(message) > 50 THEN concat(substring(message, 1, 50), '...') ELSE message END as message
+            FROM commits INNER JOIN devs ON commits.dev_name = devs.dev_name)
 
     SELECT * FROM user_commits ORDER BY commit_date DESC
 WITH DATA;

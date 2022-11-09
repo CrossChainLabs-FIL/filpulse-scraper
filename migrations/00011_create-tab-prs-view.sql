@@ -2,7 +2,7 @@ CREATE MATERIALIZED VIEW IF NOT EXISTS tab_prs_view
 AS
     SELECT
         pr_number,
-        title,
+        CASE WHEN length(title) > 50 THEN concat(substring(title, 1, 50), '...') ELSE title END as title,
         html_url,
         dev_name,
         avatar_url,
