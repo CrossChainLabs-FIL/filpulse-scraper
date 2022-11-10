@@ -1,21 +1,21 @@
 CREATE MATERIALIZED VIEW IF NOT EXISTS tab_prs_view
 AS
     SELECT
-        pr_number,
+        number,
         CASE WHEN length(title) > 50 THEN concat(substring(title, 1, 50), '...') ELSE title END as title,
         html_url,
         dev_name,
         avatar_url,
         repo,
         organisation,
-        pr_state,
-        CASE WHEN pr_state = 'closed' AND merged_at is not null THEN true ELSE false END AS is_merged,
+        state,
         updated_at
-    FROM prs
+    FROM issues
+    WHERE is_pr = true
     ORDER BY updated_at DESC
 WITH DATA;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_tab_prs_view ON tab_prs_view(pr_number, repo, organisation);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tab_prs_view ON tab_prs_view(number, repo, organisation);
 
 CREATE INDEX IF NOT EXISTS idx_tab_tab_prs_view_dev_name ON tab_prs_view(dev_name);
 CREATE INDEX IF NOT EXISTS idx_tab_tab_prs_view_repo ON tab_prs_view(repo);

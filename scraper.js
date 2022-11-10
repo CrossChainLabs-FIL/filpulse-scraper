@@ -532,77 +532,6 @@ class Scraper {
         INFO(`GetRepoCommits [${org}/${repo}] done (used requests: ${requests})`);
     }
 
-    async GetRepoPRs(repo, org) {
-        let repo_full_name = org + '/' + repo;
-        let requests = this.remaining_requests;
-
-        INFO(`GetRepoPRs [${org}/${repo}]`);
-
-        try {
-            let have_items = false;
-            let page = 1;
-
-            do {
-                let result = [];
-
-                let params = {
-                    per_page: PER_PAGE,
-                    page: page,
-                    state: 'all',
-                };
-
-                const respPRs = await this.GetWithRateLimitCheck(
-                    this.api + 'repos/' + repo_full_name + '/pulls', params);
-
-                if (respPRs?.data.length === PER_PAGE) {
-                    have_items = true;
-                    page++;
-                } else {
-                    have_items = false;
-                }
-
-                let contributors = [];
-
-                respPRs?.data.forEach(pr => {
-                    result.push({
-                        id: pr?.id,
-                        pr_number: pr?.number,
-                        title: pr?.title,
-                        html_url: pr?.html_url,
-                        pr_state: pr?.state,
-                        created_at: pr?.created_at,
-                        updated_at: pr?.updated_at,
-                        closed_at: pr?.closed_at,
-                        merged_at: pr?.merged_at,
-                        repo: repo,
-                        organisation: org,
-                        dev_name: pr?.user?.login,
-                        avatar_url: pr?.user?.avatar_url,
-                    });
-
-
-                    if (pr?.user?.type === 'User') {
-                        contributors.push({
-                            id: pr?.user?.id,
-                            dev_name: pr?.user?.login,
-                            avatar_url: pr?.user?.avatar_url,
-                        })
-                    }
-
-                });
-
-                await db.SaveDevs(contributors);
-                await db.SavePRs(result);
-            } while (have_items);
-
-        } catch (e) {
-            ERROR(`GetRepoPRs: ${e}`);
-        }
-
-        requests = requests - this.remaining_requests;
-
-        INFO(`GetRepoPRs [${org}/${repo}] done (used requests: ${requests})`);
-    }
 
     async GetRepoIssues(repo, org) {
         let repo_full_name = org + '/' + repo;
@@ -650,12 +579,16 @@ class Scraper {
                 let contributors = [];
 
                 respIssues?.data.forEach(issue => {
+                    let is_pr = false;
+                    if (issue?.pull_request) {
+                        is_pr = true;
+                    }
                     result.push({
-                        id: issue?.id,
-                        issue_number: issue?.number,
+                        number: issue?.number,
                         title: issue?.title,
                         html_url: issue?.html_url,
-                        issue_state: issue?.state,
+                        is_pr: is_pr,
+                        state: issue?.state,
                         created_at: issue?.created_at,
                         updated_at: issue?.updated_at,
                         closed_at: issue?.closed_at,
@@ -667,7 +600,7 @@ class Scraper {
 
                     issue?.assignees.forEach(assignee => { 
                         assignees.push({
-                            issue_number: issue?.number,
+                            number: issue?.number,
                             dev_name: assignee?.login,
                             avatar_url: assignee?.avatar_url,
                             repo: repo,
@@ -889,7 +822,7 @@ class Scraper {
                     let issue_number = parseInt(comment?.issue_url.substring(n + 1));
                     result.push({
                         id: comment?.id,
-                        issue_number: issue_number,
+                        number: issue_number,
                         html_url: comment?.html_url,
                         body: comment?.body,
                         created_at: comment?.created_at,
@@ -897,6 +830,7 @@ class Scraper {
                         repo: repo,
                         organisation: org,
                         dev_name: comment?.user?.login,
+                        avatar_url: comment?.user?.avatar_url,
                     });
 
                 });
@@ -928,7 +862,6 @@ class Scraper {
 
             if (status.pushed) {
                 await this.GetRepoCommits(repo, org);
-                await this.GetRepoPRs(repo, org);
             }
 
             if (status.updated) {

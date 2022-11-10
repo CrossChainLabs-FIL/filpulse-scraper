@@ -241,11 +241,12 @@ class DB {
         for (let i = 0; i < issues.length; i++) {
             try {
                 let issue = issues[i];
-                let values = `'${issue.id}', \
-                        '${issue.issue_number}',\
+                let values = `
+                        '${issue.number}',\
                         '${FormatText(issue.title)}',\
                         '${issue.html_url}',\
-                        '${issue.issue_state}',\
+                        ${issue.is_pr},\
+                        '${issue.state}',\
                         ${FormatNull(issue.created_at)},\
                         ${FormatNull(issue.updated_at)},\
                         ${FormatNull(issue.closed_at)},\
@@ -256,13 +257,13 @@ class DB {
 
                 query += `\
                     UPDATE issues SET title='${FormatText(issue.title)}',\
-                                issue_state='${issue.issue_state}', \
+                                state='${issue.state}', \
                                 updated_at=${FormatNull(issue.updated_at)}, \
                                 closed_at=${FormatNull(issue.closed_at)}, \
                                 avatar_url='${issue.avatar_url}' \
-                        WHERE id='${issue.id}' AND repo='${issue.repo}' AND organisation='${issue.organisation}'; \
-                    INSERT INTO issues (id, issue_number, title, html_url, issue_state, created_at, updated_at, closed_at, repo, organisation, dev_name, avatar_url) \
-                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues WHERE id='${issue.id}' AND repo='${issue.repo}' AND organisation='${issue.organisation}');`;
+                        WHERE number='${issue.number}' AND repo='${issue.repo}' AND organisation='${issue.organisation}'; \
+                    INSERT INTO issues (number, title, html_url, is_pr, state, created_at, updated_at, closed_at, repo, organisation, dev_name, avatar_url) \
+                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues WHERE number='${issue.number}' AND repo='${issue.repo}' AND organisation='${issue.organisation}');`;
 
 
             } catch (err) {
@@ -279,22 +280,23 @@ class DB {
         for (let i = 0; i < issues_comments.length; i++) {
             try {
                 let issues_comment = issues_comments[i];
-                let values = `'${issues_comment.id}', \
-                        '${issues_comment.issue_number}',\
+                let values = `
+                        '${issues_comment.number}',\
                         '${issues_comment.html_url}',\
-                        '${FormatText(issues_comment.body)}',\
                         ${FormatNull(issues_comment.created_at)},\
                         ${FormatNull(issues_comment.updated_at)},\
                         '${issues_comment.repo}',\
                         '${issues_comment.organisation}',\
-                        '${issues_comment.dev_name}'`;
+                        '${issues_comment.dev_name}',\
+                        '${issues_comment.avatar_url}'`;
 
                 query += `\
-                    UPDATE issues_comments SET body='${FormatText(issues_comment.body)}',\
-                                updated_at=${FormatNull(issues_comment.updated_at)} \
-                        WHERE id='${issues_comment.id}' AND repo='${issues_comment.repo}' AND organisation='${issues_comment.organisation}'; \
-                    INSERT INTO issues_comments (id, issue_number, html_url, body, created_at, updated_at, repo, organisation, dev_name) \
-                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues_comments WHERE id='${issues_comment.id}' AND repo='${issues_comment.repo}' AND organisation='${issues_comment.organisation}');`;
+                    UPDATE issues_comments SET \
+                                updated_at=${FormatNull(issues_comment.updated_at)}, \
+                                avatar_url= '${issues_comment.avatar_url}' \
+                        WHERE number='${issues_comment.number}' AND repo='${issues_comment.repo}' AND organisation='${issues_comment.organisation}'; \
+                    INSERT INTO issues_comments (number, html_url, created_at, updated_at, repo, organisation, dev_name, avatar_url) \
+                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues_comments WHERE number='${issues_comment.number}' AND repo='${issues_comment.repo}' AND organisation='${issues_comment.organisation}');`;
 
 
             } catch (err) {
@@ -312,7 +314,7 @@ class DB {
             try {
                 let assignee = issues_assignees[i];
                 let values = `
-                        '${assignee.issue_number}',\
+                        '${assignee.number}',\
                         '${assignee.dev_name}',\
                         '${assignee.avatar_url}',\
                         '${assignee.repo}',\
@@ -320,9 +322,9 @@ class DB {
 
                 query += `\
                     UPDATE issues_assignees SET avatar_url='${assignee.avatar_url}'\
-                        WHERE issue_number='${assignee.issue_number}' AND dev_name='${assignee.dev_name}' AND repo='${assignee.repo}' AND organisation='${assignee.organisation}'; \
-                    INSERT INTO issues_assignees (issue_number, dev_name, avatar_url, repo, organisation) \
-                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues_assignees WHERE issue_number='${assignee.issue_number}' AND dev_name='${assignee.dev_name}' AND repo='${assignee.repo}' AND organisation='${assignee.organisation}');`;
+                        WHERE number='${assignee.number}' AND dev_name='${assignee.dev_name}' AND repo='${assignee.repo}' AND organisation='${assignee.organisation}'; \
+                    INSERT INTO issues_assignees (number, dev_name, avatar_url, repo, organisation) \
+                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues_assignees WHERE number='${assignee.number}' AND dev_name='${assignee.dev_name}' AND repo='${assignee.repo}' AND organisation='${assignee.organisation}');`;
 
 
             } catch (err) {

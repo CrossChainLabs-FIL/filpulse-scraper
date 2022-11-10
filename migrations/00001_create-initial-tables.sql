@@ -84,11 +84,11 @@ CREATE TABLE IF NOT EXISTS prs
 
 CREATE TABLE IF NOT EXISTS issues
 (
-    id int NOT NULL,
-    issue_number int NOT NULL,
+    number int NOT NULL,
     title text NOT NULL,
     html_url text NOT NULL,
-    issue_state text NOT NULL,
+    is_pr boolean,
+    state text NOT NULL,
     created_at Timestamptz,
     updated_at Timestamptz,
     closed_at Timestamptz,
@@ -96,30 +96,68 @@ CREATE TABLE IF NOT EXISTS issues
     organisation text NOT NULL,
     dev_name text NOT NULL,
     avatar_url text,
-    UNIQUE (id)
+    UNIQUE (number, repo, organisation)
 );
 
 CREATE TABLE IF NOT EXISTS issues_comments
 (
-    id int NOT NULL,
-    issue_number int NOT NULL,
+    number int NOT NULL,
     html_url text NOT NULL,
-    body text NOT NULL,
+    is_pr boolean,
     created_at Timestamptz,
     updated_at Timestamptz,
     repo text NOT NULL,
     organisation text NOT NULL,
     dev_name text NOT NULL,
-    UNIQUE (id)
+    avatar_url text,
+    UNIQUE(number, repo, organisation)
 );
 
 CREATE TABLE IF NOT EXISTS issues_assignees
 (
-    issue_number int NOT NULL,
+    number int NOT NULL,
     dev_name text NOT NULL,
     avatar_url text,
     repo text NOT NULL,
     organisation text NOT NULL,
-    UNIQUE (dev_name, issue_number, repo, organisation)
+    UNIQUE (dev_name, number, repo, organisation)
 );
+
+CREATE TABLE IF NOT EXISTS releases
+(
+    id bigint NOT NULL,
+    tag_name text,
+    name text,
+    draft boolean,
+    prerelease boolean,
+    created_at Timestamptz,
+    published_at Timestamptz,
+    repo text NOT NULL,
+    organisation text NOT NULL,
+    dev_name text NOT NULL,
+    avatar_url text,
+    UNIQUE (id)
+);
+
+CREATE TABLE IF NOT EXISTS users
+(
+    id SERIAL NOT NULL,
+    username text NOT NULL UNIQUE,
+    avatar_url text NOT NULL,
+    created TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    PRIMARY KEY ("id")
+);
+
+
+CREATE TABLE IF NOT EXISTS watchlist
+(
+    user_id SERIAL NOT NULL,
+    number int NOT NULL,
+    repo text NOT NULL,
+    organisation text NOT NULL,
+    viewed_at Timestamptz DEFAULT now(),
+
+    UNIQUE (number, repo, organisation, user_id)
+);
+
 
