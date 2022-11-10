@@ -12,7 +12,7 @@ with
      SELECT
         user_id,
         watchlist_data.number,
-        title,
+        CASE WHEN length(title) > 50 THEN concat(substring(title, 1, 50), '...') ELSE title END as title,
         html_url,
         issues.state,
         dev_name,
@@ -37,3 +37,17 @@ ORDER BY updated_at DESC
 WITH DATA;
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_tab_watchlist_view ON tab_watchlist_view(user_id, number, repo, organisation);
+
+CREATE OR REPLACE FUNCTION refresh_watchlist_view()
+  RETURNS TRIGGER LANGUAGE plpgsql
+  AS $$
+  BEGIN
+  REFRESH MATERIALIZED VIEW CONCURRENTLY tab_watchlist_view;
+  RETURN NULL;
+  END $$;
+
+  CREATE TRIGGER refresh_watchlist_view
+  AFTER INSERT OR UPDATE OR DELETE OR TRUNCATE
+  ON watchlist
+  FOR EACH STATEMENT
+  EXECUTE PROCEDURE refresh_watchlist_view();
