@@ -195,46 +195,6 @@ class DB {
         await this.Query(query, 'SaveCommits');
     }
 
-    async SavePRs(prs) {
-        let query = '';
-
-        for (let i = 0; i < prs.length; i++) {
-            try {
-                let pr = prs[i];
-                let values = `'${pr.id}', \
-                        '${pr.pr_number}',\
-                        '${FormatText(pr.title)}',\
-                        '${pr.html_url}',\
-                        '${pr.pr_state}',\
-                        ${FormatNull(pr.created_at)},\
-                        ${FormatNull(pr.updated_at)},\
-                        ${FormatNull(pr.closed_at)},\
-                        ${FormatNull(pr.merged_at)},\
-                        '${pr.repo}',\
-                        '${pr.organisation}',\
-                        '${pr.dev_name}',\
-                        '${pr.avatar_url}'`;
-
-                query += `\
-                    UPDATE prs SET title='${FormatText(pr.title)}',\
-                                pr_state='${pr.pr_state}', \
-                                updated_at=${FormatNull(pr.updated_at)}, \
-                                closed_at=${FormatNull(pr.closed_at)}, \
-                                merged_at=${FormatNull(pr.merged_at)}, \
-                                avatar_url='${pr.avatar_url}' \
-                        WHERE id='${pr.id}' AND repo='${pr.repo}' AND organisation='${pr.organisation}'; \
-                    INSERT INTO prs (id, pr_number, title, html_url, pr_state, created_at, updated_at, closed_at, merged_at, repo, organisation, dev_name, avatar_url) \
-                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM prs WHERE id='${pr.id}' AND repo='${pr.repo}' AND organisation='${pr.organisation}');`;
-
-
-            } catch (err) {
-                WARNING(`[SavePRs] -> ${err}`)
-            }
-        }
-
-        await this.Query(query, 'SavePRs');
-    }
-
     async SaveIssues(issues) {
         let query = '';
 
