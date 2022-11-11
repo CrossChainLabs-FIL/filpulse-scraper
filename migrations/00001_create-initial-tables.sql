@@ -64,24 +64,6 @@ CREATE TABLE IF NOT EXISTS devs_contributions
     UNIQUE (repo, organisation, dev_name)
 );
 
-CREATE TABLE IF NOT EXISTS prs
-(
-    id bigint NOT NULL,
-    pr_number int NOT NULL,
-    title text NOT NULL,
-    html_url text NOT NULL,
-    pr_state text NOT NULL,
-    created_at Timestamptz,
-    updated_at Timestamptz,
-    closed_at Timestamptz,
-    merged_at Timestamptz,
-    repo text NOT NULL,
-    organisation text NOT NULL,
-    dev_name text NOT NULL,
-    avatar_url text,
-    UNIQUE (id)
-);
-
 CREATE TABLE IF NOT EXISTS issues
 (
     number int NOT NULL,
@@ -101,16 +83,16 @@ CREATE TABLE IF NOT EXISTS issues
 
 CREATE TABLE IF NOT EXISTS issues_comments
 (
+    id int NOT NULL,
     number int NOT NULL,
     html_url text NOT NULL,
-    is_pr boolean,
     created_at Timestamptz,
     updated_at Timestamptz,
     repo text NOT NULL,
     organisation text NOT NULL,
     dev_name text NOT NULL,
     avatar_url text,
-    UNIQUE(number, repo, organisation)
+    UNIQUE(id, repo, organisation)
 );
 
 CREATE TABLE IF NOT EXISTS issues_assignees
@@ -120,6 +102,17 @@ CREATE TABLE IF NOT EXISTS issues_assignees
     avatar_url text,
     repo text NOT NULL,
     organisation text NOT NULL,
+    UNIQUE (dev_name, number, repo, organisation)
+);
+
+CREATE TABLE IF NOT EXISTS issues_events
+(
+    number int NOT NULL,
+    dev_name text NOT NULL,
+    avatar_url text,
+    repo text NOT NULL,
+    organisation text NOT NULL,
+    created_at Timestamptz,
     UNIQUE (dev_name, number, repo, organisation)
 );
 

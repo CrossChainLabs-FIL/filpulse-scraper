@@ -202,7 +202,7 @@ class DB {
             try {
                 let issue = issues[i];
                 let values = `
-                        '${issue.number}',\
+                        ${issue.number},\
                         '${FormatText(issue.title)}',\
                         '${issue.html_url}',\
                         ${issue.is_pr},\
@@ -223,7 +223,7 @@ class DB {
                                 avatar_url='${issue.avatar_url}' \
                         WHERE number='${issue.number}' AND repo='${issue.repo}' AND organisation='${issue.organisation}'; \
                     INSERT INTO issues (number, title, html_url, is_pr, state, created_at, updated_at, closed_at, repo, organisation, dev_name, avatar_url) \
-                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues WHERE number='${issue.number}' AND repo='${issue.repo}' AND organisation='${issue.organisation}');`;
+                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues WHERE number=${issue.number} AND repo='${issue.repo}' AND organisation='${issue.organisation}');`;
 
 
             } catch (err) {
@@ -241,7 +241,8 @@ class DB {
             try {
                 let issues_comment = issues_comments[i];
                 let values = `
-                        '${issues_comment.number}',\
+                        ${issues_comment.id},\
+                        ${issues_comment.number},\
                         '${issues_comment.html_url}',\
                         ${FormatNull(issues_comment.created_at)},\
                         ${FormatNull(issues_comment.updated_at)},\
@@ -254,9 +255,10 @@ class DB {
                     UPDATE issues_comments SET \
                                 updated_at=${FormatNull(issues_comment.updated_at)}, \
                                 avatar_url= '${issues_comment.avatar_url}' \
-                        WHERE number='${issues_comment.number}' AND repo='${issues_comment.repo}' AND organisation='${issues_comment.organisation}'; \
-                    INSERT INTO issues_comments (number, html_url, created_at, updated_at, repo, organisation, dev_name, avatar_url) \
-                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues_comments WHERE number='${issues_comment.number}' AND repo='${issues_comment.repo}' AND organisation='${issues_comment.organisation}');`;
+                        WHERE id=${issues_comment.id} AND repo='${issues_comment.repo}' AND organisation='${issues_comment.organisation}'; \
+                    INSERT INTO issues_comments (id, number, html_url, created_at, updated_at, repo, organisation, dev_name, avatar_url) \
+                            SELECT ${values} WHERE NOT EXISTS (SELECT 1 FROM issues_comments 
+                                WHERE id=${issues_comment.id} AND repo='${issues_comment.repo}' AND organisation='${issues_comment.organisation}');`;
 
 
             } catch (err) {

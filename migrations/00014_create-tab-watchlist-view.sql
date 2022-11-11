@@ -8,9 +8,26 @@ with
   participants as (SELECT number, repo, organisation, '[["' || string_agg(concat_ws('","',dev_name,avatar_url), '"],["') || '"]]' AS participants
                    FROM   participants_list
                    GROUP  BY number, repo, organisation),
+  comments as (SELECT number, repo, organisation, COUNT(number) as comments
+                FROM   issues_comments
+                GROUP BY number, repo, organisation),
+  new_comments as (SELECT
+              user_id,
+              watchlist.number,
+              watchlist.repo,
+              watchlist.organisation,
+              watchlist.viewed_at,
+              COUNT(ic.id) as new_comments
+              FROM watchlist
+              LEFT JOIN issues_comments ic on watchlist.number = ic.number
+                         AND watchlist.repo = ic.repo
+                         AND watchlist.organisation = ic.organisation
+                         AND watchlist.viewed_at < ic.updated_at
+              GROUP BY user_id, watchlist.number, watchlist.repo, watchlist.organisation, viewed_at),
+
   watchlist as (
      SELECT
-        user_id,
+        watchlist_data.user_id,
         watchlist_data.number,
         CASE WHEN length(title) > 50 THEN concat(substring(title, 1, 50), '...') ELSE title END as title,
         html_url,
@@ -20,9 +37,12 @@ with
         watchlist_data.repo,
         watchlist_data.organisation,
         participants.participants,
+        comments.comments,
+        new_comments.new_comments,
         issues.is_pr,
+        created_at,
         updated_at,
-        viewed_at
+        watchlist_data.viewed_at
 FROM watchlist_data
 LEFT JOIN issues ON issues.number = watchlist_data.number
                          AND issues.repo = watchlist_data.repo
@@ -30,6 +50,13 @@ LEFT JOIN issues ON issues.number = watchlist_data.number
 LEFT JOIN participants ON participants.number = watchlist_data.number
                          AND participants.repo = watchlist_data.repo
                          AND participants.organisation = watchlist_data.organisation
+LEFT JOIN comments ON comments.number = watchlist_data.number
+                         AND comments.repo = watchlist_data.repo
+                         AND comments.organisation = watchlist_data.organisation
+LEFT JOIN new_comments ON new_comments.number = watchlist_data.number
+                         AND new_comments.repo = watchlist_data.repo
+                         AND new_comments.organisation = watchlist_data.organisation
+                         AND new_comments.user_id = watchlist_data.user_id
 )
 
 SELECT * FROM watchlist
