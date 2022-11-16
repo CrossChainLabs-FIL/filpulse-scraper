@@ -11,16 +11,21 @@ with
       organisation,
       dev_name,
       avatar_url
-FROM   participants_list)
-SELECT
-        DISTINCT dev_name, user_id,
+FROM   participants_list),
+     unique_participants as
+(SELECT
+        dev_name,
+        user_id,
         avatar_url,
         watchlist_data.repo,
         watchlist_data.organisation
 FROM watchlist_data
 LEFT JOIN participants ON participants.number = watchlist_data.number
                          AND participants.repo = watchlist_data.repo
-                         AND participants.organisation = watchlist_data.organisation
+                         AND participants.organisation = watchlist_data.organisation)
+SELECT DISTINCT dev_name, user_id,
+        avatar_url
+FROM unique_participants
 
 WITH DATA;
 
