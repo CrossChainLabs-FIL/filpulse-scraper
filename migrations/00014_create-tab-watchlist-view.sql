@@ -63,7 +63,7 @@ SELECT * FROM watchlist
 ORDER BY updated_at DESC
 WITH DATA;
 
-CREATE UNIQUE INDEX IF NOT EXISTS idx_tab_watchlist_view ON tab_watchlist_view(user_id, number, repo, organisation);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_tab_watchlist_view ON tab_watchlist_view(number, user_id, repo, organisation);
 
 CREATE OR REPLACE FUNCTION refresh_watchlist_view()
   RETURNS TRIGGER LANGUAGE plpgsql
