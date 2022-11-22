@@ -180,7 +180,7 @@ class DB {
                             '${commit.organisation}',\
                             '${commit.branch}',\
                             ${FormatNull(commit.commit_date)},
-                            '${FormatText(commit.message)}'`;
+                            '${FormatText(commit.message?.substring(0, 100))}'`;
 
                 query += `\
                     INSERT INTO commits (commit_hash, dev_id, dev_name, repo, organisation, branch, commit_date, message) \
@@ -203,7 +203,7 @@ class DB {
                 let issue = issues[i];
                 let values = `
                         ${issue.number},\
-                        '${FormatText(issue.title)}',\
+                        '${FormatText(issue.title?.substring(0, 100))}',\
                         '${issue.html_url}',\
                         ${issue.is_pr},\
                         '${issue.state}',\
