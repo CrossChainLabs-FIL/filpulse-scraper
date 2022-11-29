@@ -1,15 +1,18 @@
 CREATE MATERIALIZED VIEW IF NOT EXISTS tab_releases_view
 AS
+    with latest as (SELECT repo, organisation, max(published_at) as published_at, 'Latest' as status FROM releases GROUP BY repo, organisation)
     SELECT
-        id,
+        releases.id,
         CASE WHEN length(name) > 50 THEN concat(substring(name, 1, 50), '...') ELSE name END as name,
+        tag_name,
         dev_name,
         avatar_url,
-        CASE WHEN published_at is not null THEN published_at ELSE created_at END AS updated_at,
-        CASE WHEN draft is true THEN 'Draft' ELSE CASE WHEN prerelease is true THEN 'Pre-release' ELSE 'Released' END END AS state,
-        repo,
-        organisation
+        COALESCE(releases.published_at, created_at) AS updated_at,
+        CASE WHEN draft is true THEN 'Draft' ELSE CASE WHEN prerelease is true THEN 'Pre-release' ELSE COALESCE(latest.status, 'Released') END END AS state,
+        releases.repo,
+        releases.organisation
     FROM releases
+    LEFT JOIN latest ON latest.published_at = releases.published_at AND latest.repo = releases.repo AND latest.organisation = releases.organisation
     ORDER BY updated_at DESC
 WITH DATA;
 
