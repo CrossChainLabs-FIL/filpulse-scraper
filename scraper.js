@@ -864,7 +864,7 @@ class Scraper {
                 await this.GetRepoCommits(repo, org);
             }
 
-            if (status.updated) {
+            if (status.updated || status.pushed) {
                 await this.GetRepoContributors(repo, org);
                 await this.GetRepoReleases(repo, org);
                 await this.GetRepoIssues(repo, org);
